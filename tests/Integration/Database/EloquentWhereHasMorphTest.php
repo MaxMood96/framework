@@ -12,10 +12,8 @@ use Illuminate\Tests\Integration\Database\DatabaseTestCase;
 
 class EloquentWhereHasMorphTest extends DatabaseTestCase
 {
-    protected function setUp(): void
+    protected function defineDatabaseMigrationsAfterDatabaseRefreshed()
     {
-        parent::setUp();
-
         Schema::create('posts', function (Blueprint $table) {
             $table->increments('id');
             $table->string('title');
@@ -133,6 +131,10 @@ class EloquentWhereHasMorphTest extends DatabaseTestCase
     {
         Schema::table('posts', function (Blueprint $table) {
             $table->string('slug')->nullable();
+        });
+
+        Schema::table('comments', function (Blueprint $table) {
+            $table->dropIndex('comments_commentable_type_commentable_id_index');
         });
 
         Schema::table('comments', function (Blueprint $table) {

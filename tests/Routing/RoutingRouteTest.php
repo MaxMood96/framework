@@ -1763,6 +1763,28 @@ class RoutingRouteTest extends TestCase
         $this->assertNotInstanceOf(JsonResponse::class, $response);
     }
 
+    public function testRouteFlushController()
+    {
+        $container = new Container;
+        $router = $this->getRouter();
+
+        $router->get('count', ActionCountStub::class);
+        $request = Request::create('count', 'GET');
+
+        $response = $router->dispatch($request);
+        $this->assertSame(1, $response->original['invokedCount']);
+        $this->assertSame(1, $response->original['middlewareInvokedCount']);
+
+        $response = $router->dispatch($request);
+        $this->assertSame(2, $response->original['invokedCount']);
+        $this->assertSame(2, $response->original['middlewareInvokedCount']);
+
+        $request->route()->flushController();
+        $response = $router->dispatch($request);
+        $this->assertSame(1, $response->original['invokedCount']);
+        $this->assertSame(1, $response->original['middlewareInvokedCount']);
+    }
+
     public function testJsonResponseIsReturned()
     {
         $router = $this->getRouter();
@@ -1924,6 +1946,24 @@ class RoutingRouteTest extends TestCase
         $response = $router->dispatch($request);
         $this->assertTrue($response->isRedirect('contact'));
         $this->assertEquals(301, $response->getStatusCode());
+    }
+
+    public function testRouteCanMiddlewareCanBeAssigned()
+    {
+        $route = new Route(['GET'], '/', []);
+        $route->middleware(['foo'])->can('create', Route::class);
+
+        $this->assertEquals([
+            'foo',
+            'can:create,Illuminate\Routing\Route',
+        ], $route->middleware());
+
+        $route = new Route(['GET'], '/', []);
+        $route->can('create');
+
+        $this->assertEquals([
+            'can:create',
+        ], $route->middleware());
     }
 
     protected function getRouter()
@@ -2283,6 +2323,32 @@ class ActionStub
     public function __invoke()
     {
         return 'hello';
+    }
+}
+
+class ActionCountStub extends Controller
+{
+    protected $middlewareInvokedCount = 0;
+
+    protected $invokedCount = 0;
+
+    public function __construct()
+    {
+        $this->middleware(function ($request, $next) {
+            $this->middlewareInvokedCount++;
+
+            return $next($request);
+        });
+    }
+
+    public function __invoke()
+    {
+        $this->invokedCount++;
+
+        return [
+            'invokedCount' => $this->invokedCount,
+            'middlewareInvokedCount' => $this->middlewareInvokedCount,
+        ];
     }
 }
 

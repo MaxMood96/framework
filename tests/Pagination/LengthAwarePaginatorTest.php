@@ -56,22 +56,43 @@ class LengthAwarePaginatorTest extends TestCase
         $this->assertEmpty($paginator->items());
     }
 
+    public function testLengthAwarePaginatorisOnFirstAndLastPage()
+    {
+        $paginator = new LengthAwarePaginator(['1', '2', '3', '4'], 4, 2, 2);
+
+        $this->assertTrue($paginator->onLastPage());
+        $this->assertFalse($paginator->onFirstPage());
+
+        $paginator = new LengthAwarePaginator(['1', '2', '3', '4'], 4, 2, 1);
+
+        $this->assertFalse($paginator->onLastPage());
+        $this->assertTrue($paginator->onFirstPage());
+    }
+
     public function testLengthAwarePaginatorCanGenerateUrls()
     {
         $this->p->setPath('http://website.com');
         $this->p->setPageName('foo');
 
-        $this->assertSame('http://website.com',
-                            $this->p->path());
+        $this->assertSame(
+            'http://website.com',
+            $this->p->path()
+        );
 
-        $this->assertSame('http://website.com?foo=2',
-                            $this->p->url($this->p->currentPage()));
+        $this->assertSame(
+            'http://website.com?foo=2',
+            $this->p->url($this->p->currentPage())
+        );
 
-        $this->assertSame('http://website.com?foo=1',
-                            $this->p->url($this->p->currentPage() - 1));
+        $this->assertSame(
+            'http://website.com?foo=1',
+            $this->p->url($this->p->currentPage() - 1)
+        );
 
-        $this->assertSame('http://website.com?foo=1',
-                            $this->p->url($this->p->currentPage() - 2));
+        $this->assertSame(
+            'http://website.com?foo=1',
+            $this->p->url($this->p->currentPage() - 2)
+        );
     }
 
     public function testLengthAwarePaginatorCanGenerateUrlsWithQuery()
@@ -79,8 +100,10 @@ class LengthAwarePaginatorTest extends TestCase
         $this->p->setPath('http://website.com?sort_by=date');
         $this->p->setPageName('foo');
 
-        $this->assertSame('http://website.com?sort_by=date&foo=2',
-                            $this->p->url($this->p->currentPage()));
+        $this->assertSame(
+            'http://website.com?sort_by=date&foo=2',
+            $this->p->url($this->p->currentPage())
+        );
     }
 
     public function testLengthAwarePaginatorCanGenerateUrlsWithoutTrailingSlashes()
@@ -88,14 +111,20 @@ class LengthAwarePaginatorTest extends TestCase
         $this->p->setPath('http://website.com/test');
         $this->p->setPageName('foo');
 
-        $this->assertSame('http://website.com/test?foo=2',
-                            $this->p->url($this->p->currentPage()));
+        $this->assertSame(
+            'http://website.com/test?foo=2',
+            $this->p->url($this->p->currentPage())
+        );
 
-        $this->assertSame('http://website.com/test?foo=1',
-                            $this->p->url($this->p->currentPage() - 1));
+        $this->assertSame(
+            'http://website.com/test?foo=1',
+            $this->p->url($this->p->currentPage() - 1)
+        );
 
-        $this->assertSame('http://website.com/test?foo=1',
-                            $this->p->url($this->p->currentPage() - 2));
+        $this->assertSame(
+            'http://website.com/test?foo=1',
+            $this->p->url($this->p->currentPage() - 2)
+        );
     }
 
     public function testLengthAwarePaginatorCorrectlyGenerateUrlsWithQueryAndSpaces()
@@ -103,8 +132,10 @@ class LengthAwarePaginatorTest extends TestCase
         $this->p->setPath('http://website.com?key=value%20with%20spaces');
         $this->p->setPageName('foo');
 
-        $this->assertSame('http://website.com?key=value%20with%20spaces&foo=2',
-                            $this->p->url($this->p->currentPage()));
+        $this->assertSame(
+            'http://website.com?key=value%20with%20spaces&foo=2',
+            $this->p->url($this->p->currentPage())
+        );
     }
 
     public function testItRetrievesThePaginatorOptions()

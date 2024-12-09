@@ -300,6 +300,17 @@ class Route
     }
 
     /**
+     * Flush the cached container instance on the route.
+     *
+     * @return void
+     */
+    public function flushController()
+    {
+        $this->computedMiddleware = null;
+        $this->controller = null;
+    }
+
+    /**
      * Determine if the route matches a given request.
      *
      * @param  \Illuminate\Http\Request  $request
@@ -1041,6 +1052,20 @@ class Route
     }
 
     /**
+     * Specify that the "Authorize" / "can" middleware should be applied to the route with the given options.
+     *
+     * @param  string  $ability
+     * @param  array|string  $models
+     * @return $this
+     */
+    public function can($ability, $models = [])
+    {
+        return empty($models)
+                    ? $this->middleware(['can:'.$ability])
+                    : $this->middleware(['can:'.$ability.','.implode(',', Arr::wrap($models))]);
+    }
+
+    /**
      * Get the middleware for the route's controller.
      *
      * @return array
@@ -1079,6 +1104,28 @@ class Route
     public function excludedMiddleware()
     {
         return (array) ($this->action['excluded_middleware'] ?? []);
+    }
+
+    /**
+     * Indicate that the route should enforce scoping of multiple implicit Eloquent bindings.
+     *
+     * @return bool
+     */
+    public function scopeBindings()
+    {
+        $this->action['scope_bindings'] = true;
+
+        return $this;
+    }
+
+    /**
+     * Determine if the route should enforce scoping of multiple implicit Eloquent bindings.
+     *
+     * @return bool
+     */
+    public function enforcesScopedBindings()
+    {
+        return (bool) ($this->action['scope_bindings'] ?? false);
     }
 
     /**

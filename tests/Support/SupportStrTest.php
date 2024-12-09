@@ -5,6 +5,7 @@ namespace Illuminate\Tests\Support;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\TestCase;
 use Ramsey\Uuid\UuidInterface;
+use ReflectionClass;
 
 class SupportStrTest extends TestCase
 {
@@ -52,6 +53,17 @@ class SupportStrTest extends TestCase
         $this->assertSame('Foo Bar', Str::headline('foo_bar'));
         $this->assertSame('Foo Bar Baz', Str::headline('foo-barBaz'));
         $this->assertSame('Foo Bar Baz', Str::headline('foo-bar_baz'));
+
+        $this->assertSame('Öffentliche Überraschungen', Str::headline('öffentliche-überraschungen'));
+        $this->assertSame('Öffentliche Überraschungen', Str::headline('-_öffentliche_überraschungen_-'));
+        $this->assertSame('Öffentliche Überraschungen', Str::headline('-öffentliche überraschungen'));
+
+        $this->assertSame('Sind Öde Und So', Str::headline('sindÖdeUndSo'));
+
+        $this->assertSame('Orwell 1984', Str::headline('orwell 1984'));
+        $this->assertSame('Orwell 1984', Str::headline('orwell   1984'));
+        $this->assertSame('Orwell 1984', Str::headline('-orwell-1984 -'));
+        $this->assertSame('Orwell 1984', Str::headline(' orwell_- 1984 '));
     }
 
     public function testStringWithoutWordsDoesntProduceError()
@@ -249,6 +261,22 @@ class SupportStrTest extends TestCase
         $this->assertSame('/test/string', Str::start('//test/string', '/'));
     }
 
+    public function testFlushCache()
+    {
+        $reflection = new ReflectionClass(Str::class);
+        $property = $reflection->getProperty('snakeCache');
+        $property->setAccessible(true);
+
+        Str::flushCache();
+        $this->assertEmpty($property->getValue());
+
+        Str::snake('Taylor Otwell');
+        $this->assertNotEmpty($property->getValue());
+
+        Str::flushCache();
+        $this->assertEmpty($property->getValue());
+    }
+
     public function testFinish()
     {
         $this->assertSame('abbc', Str::finish('ab', 'bc'));
@@ -418,6 +446,13 @@ class SupportStrTest extends TestCase
         $this->assertSame('Foobar', Str::remove(['f', '|'], 'Foo|bar'));
     }
 
+    public function testReverse()
+    {
+        $this->assertSame('FooBar', Str::reverse('raBooF'));
+        $this->assertSame('Teniszütő', Str::reverse('őtüzsineT'));
+        $this->assertSame('❤MultiByte☆', Str::reverse('☆etyBitluM❤'));
+    }
+
     public function testSnake()
     {
         $this->assertSame('laravel_p_h_p_framework', Str::snake('LaravelPHPFramework'));
@@ -449,6 +484,8 @@ class SupportStrTest extends TestCase
         $this->assertSame('FooBar', Str::studly('foo_bar')); // test cache
         $this->assertSame('FooBarBaz', Str::studly('foo-barBaz'));
         $this->assertSame('FooBarBaz', Str::studly('foo-bar_baz'));
+
+        $this->assertSame('ÖffentlicheÜberraschungen', Str::studly('öffentliche-überraschungen'));
     }
 
     public function testMask()
@@ -471,6 +508,19 @@ class SupportStrTest extends TestCase
 
         $this->assertSame('这是一***', Str::mask('这是一段中文', '*', 3));
         $this->assertSame('**一段中文', Str::mask('这是一段中文', '*', 0, 2));
+
+        $this->assertSame('ma*n@email.com', Str::mask('maan@email.com', '*', 2, 1));
+        $this->assertSame('ma***email.com', Str::mask('maan@email.com', '*', 2, 3));
+        $this->assertSame('ma************', Str::mask('maan@email.com', '*', 2));
+
+        $this->assertSame('mari*@email.com', Str::mask('maria@email.com', '*', 4, 1));
+        $this->assertSame('tamar*@email.com', Str::mask('tamara@email.com', '*', 5, 1));
+
+        $this->assertSame('*aria@email.com', Str::mask('maria@email.com', '*', 0, 1));
+        $this->assertSame('maria@email.co*', Str::mask('maria@email.com', '*', -1, 1));
+        $this->assertSame('maria@email.co*', Str::mask('maria@email.com', '*', -1));
+        $this->assertSame('***************', Str::mask('maria@email.com', '*', -15));
+        $this->assertSame('***************', Str::mask('maria@email.com', '*', 0));
     }
 
     public function testMatch()
@@ -528,12 +578,31 @@ class SupportStrTest extends TestCase
         $this->assertSame(1, Str::substrCount('laravelPHPFramework', 'a', -10, -3));
     }
 
+    public function testSubstrReplace()
+    {
+        $this->assertSame('12:00', Str::substrReplace('1200', ':', 2, 0));
+        $this->assertSame('The Laravel Framework', Str::substrReplace('The Framework', 'Laravel ', 4, 0));
+        $this->assertSame('Laravel – The PHP Framework for Web Artisans', Str::substrReplace('Laravel Framework', '– The PHP Framework for Web Artisans', 8));
+    }
+
     public function testUcfirst()
     {
         $this->assertSame('Laravel', Str::ucfirst('laravel'));
         $this->assertSame('Laravel framework', Str::ucfirst('laravel framework'));
         $this->assertSame('Мама', Str::ucfirst('мама'));
         $this->assertSame('Мама мыла раму', Str::ucfirst('мама мыла раму'));
+    }
+
+    public function testUcsplit()
+    {
+        $this->assertSame(['Laravel_p_h_p_framework'], Str::ucsplit('Laravel_p_h_p_framework'));
+        $this->assertSame(['Laravel_', 'P_h_p_framework'], Str::ucsplit('Laravel_P_h_p_framework'));
+        $this->assertSame(['laravel', 'P', 'H', 'P', 'Framework'], Str::ucsplit('laravelPHPFramework'));
+        $this->assertSame(['Laravel-ph', 'P-framework'], Str::ucsplit('Laravel-phP-framework'));
+
+        $this->assertSame(['Żółta', 'Łódka'], Str::ucsplit('ŻółtaŁódka'));
+        $this->assertSame(['sind', 'Öde', 'Und', 'So'], Str::ucsplit('sindÖdeUndSo'));
+        $this->assertSame(['Öffentliche', 'Überraschungen'], Str::ucsplit('ÖffentlicheÜberraschungen'));
     }
 
     public function testUuid()
@@ -553,18 +622,39 @@ class SupportStrTest extends TestCase
     {
         $this->assertSame('__Alien___', Str::padBoth('Alien', 10, '_'));
         $this->assertSame('  Alien   ', Str::padBoth('Alien', 10));
+        $this->assertSame('  ❤MultiByte☆   ', Str::padBoth('❤MultiByte☆', 16));
     }
 
     public function testPadLeft()
     {
         $this->assertSame('-=-=-Alien', Str::padLeft('Alien', 10, '-='));
         $this->assertSame('     Alien', Str::padLeft('Alien', 10));
+        $this->assertSame('     ❤MultiByte☆', Str::padLeft('❤MultiByte☆', 16));
     }
 
     public function testPadRight()
     {
         $this->assertSame('Alien-----', Str::padRight('Alien', 10, '-'));
         $this->assertSame('Alien     ', Str::padRight('Alien', 10));
+        $this->assertSame('❤MultiByte☆     ', Str::padRight('❤MultiByte☆', 16));
+    }
+
+    public function testSwapKeywords(): void
+    {
+        $this->assertSame(
+            'PHP 8 is fantastic',
+            Str::swap([
+                'PHP' => 'PHP 8',
+                'awesome' => 'fantastic',
+            ], 'PHP is awesome')
+        );
+
+        $this->assertSame(
+            'foo bar baz',
+            Str::swap([
+                'ⓐⓑ' => 'baz',
+            ], 'foo bar ⓐⓑ')
+        );
     }
 
     public function testWordCount()
@@ -615,6 +705,42 @@ class SupportStrTest extends TestCase
     {
         $this->assertSame('aaaaa', Str::repeat('a', 5));
         $this->assertSame('', Str::repeat('', 5));
+    }
+
+    /**
+     * @dataProvider specialCharacterProvider
+     */
+    public function testTransliterate(string $value, string $expected): void
+    {
+        $this->assertSame($expected, Str::transliterate($value));
+    }
+
+    public function specialCharacterProvider(): array
+    {
+        return [
+            ['ⓐⓑⓒⓓⓔⓕⓖⓗⓘⓙⓚⓛⓜⓝⓞⓟⓠⓡⓢⓣⓤⓥⓦⓧⓨⓩ', 'abcdefghijklmnopqrstuvwxyz'],
+            ['⓪①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳', '01234567891011121314151617181920'],
+            ['⓵⓶⓷⓸⓹⓺⓻⓼⓽⓾', '12345678910'],
+            ['⓿⓫⓬⓭⓮⓯⓰⓱⓲⓳⓴', '011121314151617181920'],
+            ['ⓣⓔⓢⓣ@ⓛⓐⓡⓐⓥⓔⓛ.ⓒⓞⓜ', 'test@laravel.com'],
+            ['🎂', '?'],
+            ['abcdefghijklmnopqrstuvwxyz', 'abcdefghijklmnopqrstuvwxyz'],
+            ['0123456789', '0123456789'],
+        ];
+    }
+
+    public function testTransliterateOverrideUnknown(): void
+    {
+        $this->assertSame('HHH', Str::transliterate('🎂🚧🏆', 'H'));
+        $this->assertSame('Hello', Str::transliterate('🎂', 'Hello'));
+    }
+
+    /**
+     * @dataProvider specialCharacterProvider
+     */
+    public function testTransliterateStrict(string $value, string $expected): void
+    {
+        $this->assertSame($expected, Str::transliterate($value, '?', true));
     }
 }
 

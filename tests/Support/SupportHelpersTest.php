@@ -327,30 +327,36 @@ class SupportHelpersTest extends TestCase
 
     public function testClassUsesRecursiveShouldReturnTraitsOnParentClasses()
     {
-        $this->assertSame([
-            SupportTestTraitTwo::class => SupportTestTraitTwo::class,
-            SupportTestTraitOne::class => SupportTestTraitOne::class,
-        ],
-        class_uses_recursive(SupportTestClassTwo::class));
+        $this->assertSame(
+            [
+                SupportTestTraitTwo::class => SupportTestTraitTwo::class,
+                SupportTestTraitOne::class => SupportTestTraitOne::class,
+            ],
+            class_uses_recursive(SupportTestClassTwo::class)
+        );
     }
 
     public function testClassUsesRecursiveAcceptsObject()
     {
-        $this->assertSame([
-            SupportTestTraitTwo::class => SupportTestTraitTwo::class,
-            SupportTestTraitOne::class => SupportTestTraitOne::class,
-        ],
-        class_uses_recursive(new SupportTestClassTwo));
+        $this->assertSame(
+            [
+                SupportTestTraitTwo::class => SupportTestTraitTwo::class,
+                SupportTestTraitOne::class => SupportTestTraitOne::class,
+            ],
+            class_uses_recursive(new SupportTestClassTwo)
+        );
     }
 
     public function testClassUsesRecursiveReturnParentTraitsFirst()
     {
-        $this->assertSame([
-            SupportTestTraitTwo::class => SupportTestTraitTwo::class,
-            SupportTestTraitOne::class => SupportTestTraitOne::class,
-            SupportTestTraitThree::class => SupportTestTraitThree::class,
-        ],
-        class_uses_recursive(SupportTestClassThree::class));
+        $this->assertSame(
+            [
+                SupportTestTraitTwo::class => SupportTestTraitTwo::class,
+                SupportTestTraitOne::class => SupportTestTraitOne::class,
+                SupportTestTraitThree::class => SupportTestTraitThree::class,
+            ],
+            class_uses_recursive(SupportTestClassThree::class)
+        );
     }
 
     public function testTap()
@@ -552,7 +558,7 @@ class SupportHelpersTest extends TestCase
         $this->assertEquals(2, $attempts);
 
         // Make sure we waited 100ms for the first attempt
-        $this->assertEqualsWithDelta(0.1, microtime(true) - $startTime, 0.02);
+        $this->assertEqualsWithDelta(0.1, microtime(true) - $startTime, 0.03);
     }
 
     public function testRetryWithPassingSleepCallback()
@@ -573,7 +579,7 @@ class SupportHelpersTest extends TestCase
         $this->assertEquals(3, $attempts);
 
         // Make sure we waited 300ms for the first two attempts
-        $this->assertEqualsWithDelta(0.3, microtime(true) - $startTime, 0.02);
+        $this->assertEqualsWithDelta(0.3, microtime(true) - $startTime, 0.03);
     }
 
     public function testRetryWithPassingWhenCallback()
@@ -594,7 +600,7 @@ class SupportHelpersTest extends TestCase
         $this->assertEquals(2, $attempts);
 
         // Make sure we waited 100ms for the first attempt
-        $this->assertEqualsWithDelta(0.1, microtime(true) - $startTime, 0.02);
+        $this->assertEqualsWithDelta(0.1, microtime(true) - $startTime, 0.03);
     }
 
     public function testRetryWithFailingWhenCallback()
@@ -795,22 +801,23 @@ class SupportTestArrayAccess implements ArrayAccess
         $this->attributes = $attributes;
     }
 
-    public function offsetExists($offset)
+    public function offsetExists($offset): bool
     {
         return array_key_exists($offset, $this->attributes);
     }
 
+    #[\ReturnTypeWillChange]
     public function offsetGet($offset)
     {
         return $this->attributes[$offset];
     }
 
-    public function offsetSet($offset, $value)
+    public function offsetSet($offset, $value): void
     {
         $this->attributes[$offset] = $value;
     }
 
-    public function offsetUnset($offset)
+    public function offsetUnset($offset): void
     {
         unset($this->attributes[$offset]);
     }

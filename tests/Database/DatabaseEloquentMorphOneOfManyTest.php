@@ -58,7 +58,7 @@ class DatabaseEloquentMorphOneOfManyTest extends TestCase
         $product = MorphOneOfManyTestProduct::create();
         $relation = $product->current_state();
         $relation->addEagerConstraints([$product]);
-        $this->assertSame('select MAX("states"."id") as "id_aggregate", "states"."stateful_id", "states"."stateful_type" from "states" where "states"."stateful_id" = ? and "states"."stateful_id" is not null and "states"."stateful_type" = ? and "states"."stateful_id" in (1) and "states"."stateful_type" = ? group by "states"."stateful_id", "states"."stateful_type"', $relation->getOneOfManySubQuery()->toSql());
+        $this->assertSame('select MAX("states"."id") as "id_aggregate", "states"."stateful_id", "states"."stateful_type" from "states" where "states"."stateful_type" = ? and "states"."stateful_id" = ? and "states"."stateful_id" is not null and "states"."stateful_id" in (1) and "states"."stateful_type" = ? group by "states"."stateful_id", "states"."stateful_type"', $relation->getOneOfManySubQuery()->toSql());
     }
 
     public function testReceivingModel()
@@ -92,6 +92,17 @@ class DatabaseEloquentMorphOneOfManyTest extends TestCase
 
         $this->assertNotNull($product->current_state);
         $this->assertSame('active', $product->current_state->state);
+    }
+
+    public function testForceCreateMorphType()
+    {
+        $product = MorphOneOfManyTestProduct::create();
+        $state = $product->states()->forceCreate([
+            'state' => 'active',
+        ]);
+
+        $this->assertNotNull($state);
+        $this->assertSame(MorphOneOfManyTestProduct::class, $product->current_state->stateful_type);
     }
 
     public function testExists()
